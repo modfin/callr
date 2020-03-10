@@ -1,0 +1,23 @@
+version: "3.0"
+services:
+  callr:
+    build:
+      context: ./cmd/callrd
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    environment:
+      - "TWIL_SID=XXXXXXXXXXXXXXX"
+      - "TWIL_TOKEN=YYYYYYYYYYYYYYYY"
+      - "TWIL_PHONE=+01234567"
+      - "BASE_URL=https://example.com"
+      - "DATA_PATH=/go/src/callr/store"
+      - "BASIC_AUTH_USER=admin"
+      - "BASIC_AUTH_PASS=qwerty"
+      - "INCIDENT_TOKEN=ABCDEFGH"
+    volumes:
+      - .:/go/src/callr:cached
+      - gopkg:/go/pkg:cached
+
+volumes:
+  gopkg:
