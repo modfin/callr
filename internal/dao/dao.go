@@ -16,10 +16,16 @@ type Dao struct {
 	Store string
 }
 
-func (d Dao) GetOncall() (p []Person, err error) {
+func (d Dao) GetOnCall() (p []Person, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	data, err := ioutil.ReadFile(d.Store + "/oncall.json")
+
+	filename := d.Store + "/oncall.json"
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
 	}
@@ -131,7 +137,13 @@ func (d Dao) AddLog(incident Incident, log Log) error {
 func (d Dao) GetPeople() ([]Person, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	data, err := ioutil.ReadFile(d.Store + "/people.json")
+
+	filename := d.Store + "/people.json"
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -161,19 +173,6 @@ func (d Dao) WriteOnCall(people []Person) error {
 	}
 
 	return ioutil.WriteFile(d.Store + "/oncall.json", data, 0660)
-}
-
-func (d Dao) GetOnCall() ([]Person, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	data, err := ioutil.ReadFile(d.Store + "/oncall.json")
-	if err != nil {
-		return nil, err
-	}
-
-	var people []Person
-	err = json.Unmarshal(data, &people)
-	return people, err
 }
 
 func (d Dao) GetPersonByPhone(phone string) (Person, error) {
@@ -226,7 +225,13 @@ func (d Dao) GetLogs(id string) ([]Log, error) {
 
 func (d Dao) GetIncidents() ([]Incident, error) {
 
-	files, err := ioutil.ReadDir(d.Store + "/incidents/")
+
+	filename := d.Store + "/incidents"
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	files, err := ioutil.ReadDir(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -236,6 +241,9 @@ func (d Dao) GetIncidents() ([]Incident, error) {
 		if f.IsDir() {
 			dirs = append(dirs, f.Name())
 		}
+	}
+	if len(dirs) == 0 {
+		return nil, nil
 	}
 	sort.Strings(dirs)
 	for i, j := 0, len(dirs)-1; i < j; i, j = i+1, j-1 {

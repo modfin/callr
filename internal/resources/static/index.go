@@ -233,6 +233,7 @@ const index = `
 	
 	function loadHistory() {
 	  $.get("api/incidents").done((res) => {
+	      res = res || [];
 	      HISTORY = res;
 	      dom = "";
 	      for(let i of res){

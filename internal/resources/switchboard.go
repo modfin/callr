@@ -74,7 +74,7 @@ func caller(db dao.Dao, cfg config.Config) {
 
 func mkcall(inc int, db dao.Dao, cfg config.Config) {
 	i, err := db.GetIncident()
-	oncall, err := db.GetOncall()
+	oncall, err := db.GetOnCall()
 	if err != nil {
 		fmt.Println("[Error]", err)
 		return

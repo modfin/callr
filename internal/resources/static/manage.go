@@ -342,14 +342,14 @@ const manage = `
 	
 	
 	function load() {
-	$.get('api/people').done(people => {
-	   PEOPLE = people;
-	   renderPeople()
-	});
-	$.get('api/oncall').done(oncall => {
-	   ONCALL = oncall;
-	   renderOnCall() 
-	});
+		$.get('api/people').done(people => {
+		   PEOPLE = people || [];
+		   renderPeople()
+		});
+		$.get('api/oncall').done(oncall => {
+		   ONCALL = oncall || [];
+		   renderOnCall() 
+		});
 	}
 	load()
 </script>
