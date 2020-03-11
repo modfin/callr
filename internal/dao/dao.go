@@ -85,13 +85,13 @@ func (d Dao) WriteIncident(i Incident) error {
 
 func (d Dao) CloseIncident() (Incident, error) {
 	i, err := d.GetIncident()
-	if err != nil{
+	if err != nil {
 		return Incident{}, err
 	}
 	i.Status = "Closed"
 
 	err = d.WriteIncident(i)
-	if err != nil{
+	if err != nil {
 		return Incident{}, err
 	}
 
@@ -101,27 +101,26 @@ func (d Dao) CloseIncident() (Incident, error) {
 	filename := d.Store + "/incident.json"
 	toFilename := d.Store + "/incidents/" + i.Id + "/incident.json"
 
-	err = os.MkdirAll(d.Store + "/incidents/" + i.Id, 0770)
+	err = os.MkdirAll(d.Store+"/incidents/"+i.Id, 0770)
 	if err != nil {
 		return Incident{}, err
 	}
 	return i, os.Rename(filename, toFilename)
 }
 
-
 func (d Dao) AddLog(incident Incident, log Log) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	err := os.MkdirAll(d.Store + "/incidents/" + incident.Id, 0770)
-	if err != nil{
+	err := os.MkdirAll(d.Store+"/incidents/"+incident.Id, 0770)
+	if err != nil {
 		return err
 	}
 
 	filename := d.Store + "/incidents/" + incident.Id + "/" + time.Now().Format(time.RFC3339) + ".log.json"
 
 	data, err := json.MarshalIndent(log, "", "  ")
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -129,18 +128,59 @@ func (d Dao) AddLog(incident Incident, log Log) error {
 	return err
 }
 
-func (d Dao) GetPersonByPhone(phone string) (Person, error) {
+func (d Dao) GetPeople() ([]Person, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-
 	data, err := ioutil.ReadFile(d.Store + "/people.json")
 	if err != nil {
-		return Person{}, err
+		return nil, err
 	}
 
 	var people []Person
 	err = json.Unmarshal(data, &people)
+	return people, err
+}
 
+func (d Dao) WritePeople(people []Person) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	data, err := json.MarshalIndent(people, "", "  ")
+	if err != nil {
+		return  err
+	}
+
+	return ioutil.WriteFile(d.Store + "/people.json", data, 0660)
+}
+
+func (d Dao) WriteOnCall(people []Person) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	data, err := json.MarshalIndent(people, "", "  ")
+	if err != nil {
+		return  err
+	}
+
+	return ioutil.WriteFile(d.Store + "/oncall.json", data, 0660)
+}
+
+func (d Dao) GetOnCall() ([]Person, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	data, err := ioutil.ReadFile(d.Store + "/oncall.json")
+	if err != nil {
+		return nil, err
+	}
+
+	var people []Person
+	err = json.Unmarshal(data, &people)
+	return people, err
+}
+
+func (d Dao) GetPersonByPhone(phone string) (Person, error) {
+	people, err := d.GetPeople()
+	if err != nil {
+		return Person{}, err
+	}
 	for _, p := range people {
 		if p.Phone == phone {
 			return p, nil
@@ -149,15 +189,14 @@ func (d Dao) GetPersonByPhone(phone string) (Person, error) {
 	return Person{}, errors.New("could not find person")
 }
 
-
-func (d Dao) GetLogs(id string)([]Log, error){
+func (d Dao) GetLogs(id string) ([]Log, error) {
 
 	ff, err := ioutil.ReadDir(d.Store + "/incidents/" + id)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	var files []string
-	for _, f := range ff{
+	for _, f := range ff {
 		if !f.IsDir() && strings.HasSuffix(f.Name(), ".log.json") {
 			files = append(files, f.Name())
 		}
@@ -165,8 +204,8 @@ func (d Dao) GetLogs(id string)([]Log, error){
 	sort.Strings(files)
 
 	var logs []Log
-	for _, f := range files{
-		filename := d.Store +"/incidents/" + id + "/" + f
+	for _, f := range files {
+		filename := d.Store + "/incidents/" + id + "/" + f
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			continue
 		}
@@ -177,7 +216,7 @@ func (d Dao) GetLogs(id string)([]Log, error){
 		}
 		var log Log
 		err = json.Unmarshal(data, &log)
-		if err != nil{
+		if err != nil {
 			continue
 		}
 		logs = append(logs, log)
@@ -185,16 +224,15 @@ func (d Dao) GetLogs(id string)([]Log, error){
 	return logs, nil
 }
 
-
-func (d Dao) GetIncidents() ([]Incident, error){
+func (d Dao) GetIncidents() ([]Incident, error) {
 
 	files, err := ioutil.ReadDir(d.Store + "/incidents/")
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	var dirs []string
-	for _, f := range files{
+	for _, f := range files {
 		if f.IsDir() {
 			dirs = append(dirs, f.Name())
 		}
@@ -206,9 +244,9 @@ func (d Dao) GetIncidents() ([]Incident, error){
 
 	var incidents []Incident
 
-	for _, di := range dirs{
+	for _, di := range dirs {
 
-		filename := d.Store +"/incidents/" + di + "/incident.json"
+		filename := d.Store + "/incidents/" + di + "/incident.json"
 
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			continue
