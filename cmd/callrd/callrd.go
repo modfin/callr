@@ -44,6 +44,10 @@ func main() {
 	e.POST("/incident", resources.Incident(db, cfg))
 	e.GET("/incident", resources.Incident(db, cfg))
 
+	e.GET("/ping", func(c echo.Context) error {
+		return c.String(200, "pong")
+	})
+
 	e.GET("/", static.Index, basicAuth)
 	e.GET("/manage", static.Manage, basicAuth)
 
