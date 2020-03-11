@@ -2,7 +2,7 @@ FROM golang:1.14
 
 RUN go get -u -v github.com/codeskyblue/fswatch
 
-RUN mkdir -p /go/callr
+RUN mkdir -p /src/callr
 WORKDIR /go/src/callr
 
 

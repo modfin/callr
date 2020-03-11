@@ -1,28 +1,12 @@
-FROM golang:1.14
+FROM golang:1.14-alpine as builder
+RUN apk add --no-cache tzdata ca-certificates
 
-RUN go get -u -v github.com/codeskyblue/fswatch
+RUN mkdir -p /go/src/callr
+COPY . /go/src/callr
+RUN cd /go/src/callr && go build -o /callrd ./cmd/callrd/*.go
 
-RUN mkdir -p /go/callr
-WORKDIR /go/src/callr
-
-
-RUN printf "desc: \n\
-triggers: \n\
-- name: '' \n\
-  pattens: \n\
-  - '**/*.go' \n\
-  env: \n\
-    DEBUG: '1' \n\
-  cmd: go run /go/src/callr/cmd/callrd/*.go \n\
-  shell: true \n\
-  delay: 100ms \n\
-  stop_timeout: 500ms \n\
-  signal: KILL \n\
-  kill_signal: 'SIGTERM' \n\
-watch_paths: \n\
-- /go/src/callr \n\
-watch_depth: 10 \n\
-" >> /fsw.yml
-
-CMD fswatch -config /fsw.yml
-
+FROM alpine
+RUN apk add --no-cache tzdata ca-certificates
+EXPOSE 8080
+COPY --from=builder /callrd /
+CMD /callrd
