@@ -23,14 +23,14 @@ const manage = `
 	h1{
 		text-align: center;
 		margin: 0;
-		padding: 0 0 25px 0;
+		padding: 0 0 2px 0;
 		border-bottom: 2px solid #ccc;
     	font-size: 65px;
     	color: #777;
 	}
 	h1 img{
 		height: 90px;
-		margin: 14px 0 -16px;
+		margin: 2px 0 -16px;
 	}
 	a{
 		cursor: pointer;
