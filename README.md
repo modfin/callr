@@ -107,8 +107,10 @@ $ docker stack deploy callr -c ./docker-compose.yml
 * Add the post hook `https://callr.example.com/incident?token=ABCDEFGHIJ` to you monitoring service
 
 ## TODO
+* Testing
 * Implement Lets Encrypt, in order to do away with Ingress service
 * Some clean up 
 * Add SQL based DAO
 * Rewriting some stuff to be able to run as a cloud function.
+
  
