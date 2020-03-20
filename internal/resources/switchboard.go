@@ -10,13 +10,39 @@ import (
 	"time"
 )
 
+
+func rotIncident(db dao.Dao, cfg config.Config) error{
+	i, err := db.GetIncident()
+
+	if err != nil && err.Error() == "no incident exists"{
+		return nil
+	}
+	if err != nil{
+		return err
+	}
+
+	if time.Now().After(i.CreatedAt.Add(config.Get().IncidentRottenDuration)) {
+		_, err = db.CloseIncident("Rotten")
+	}
+
+	return err
+}
+
+
+
 func Incident(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if c.QueryParams().Get("token") != cfg.IncidentToken {
 			return c.String(400, "correct token was not provided")
 		}
 
-		err := db.NewIncident()
+
+		err := rotIncident(db, cfg)
+		if err != nil{
+			return err
+		}
+
+		err = db.NewIncident()
 		if err == nil { // first once that creates it...
 			go caller(db, cfg)
 		}
@@ -50,9 +76,16 @@ func Incident(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 }
 
 func caller(db dao.Dao, cfg config.Config) {
+	sleep := time.Second*5
+	twilio := gotwilio.NewTwilioClient(cfg.TwilSID, cfg.TwilToken)
 	for {
 		i, err := db.GetIncident()
-		if err != nil {
+
+		if err != nil && err.Error() == "no incident exists" {
+			return
+		}
+
+		if err != nil{
 			fmt.Println("[Error]", err)
 		}
 
@@ -63,11 +96,44 @@ func caller(db dao.Dao, cfg config.Config) {
 			if err != nil {
 				fmt.Println("[Error]", err)
 			}
-			go mkcall(0, db, cfg)
+			mkcall(0, db, cfg)
 		case "Calling":
 
+			if i.OnCallIndex > 10 {
+				sleep = time.Minute
+				break
+			}
+
+			if time.Since(i.LastCall) > time.Minute{
+				mkcall(1, db, cfg)
+				break
+			}
+
+			r, errs, err := twilio.GetCall(i.CallId)
+			if err != nil {
+				fmt.Println("[Error]", err)
+				break
+			}
+			if errs != nil {
+				fmt.Println("[Twil Error]", errs.Error())
+				break
+			}
+
+			switch r.Status{
+			case "busy", "cancelled","completed", "failed", "no-answer":
+				mkcall(1, db, cfg)
+			}
+
+		case "Claimed":
+			sleep = time.Minute
+			err = rotIncident(db, cfg)
+			if err != nil {
+				fmt.Println("[Error]", err)
+			}
+		case "Closed", "Rotten":
+			return
 		}
-		<-time.After(time.Minute)
+		<-time.After(sleep)
 	}
 
 }
@@ -88,17 +154,11 @@ func mkcall(inc int, db dao.Dao, cfg config.Config) {
 	}
 
 	i.OnCallIndex += inc
-	err = db.WriteIncident(i)
-	if err != nil {
-		fmt.Println("[Error]", err)
-		return
-	}
-
 	idx := i.OnCallIndex % len(oncall)
 	p := oncall[idx]
 
 	twilio := gotwilio.NewTwilioClient(cfg.TwilSID, cfg.TwilToken)
-	_, errs, err := twilio.CallWithUrlCallbacks(cfg.TwilPhone, p.Phone, gotwilio.NewCallbackParameters(cfg.BaseURL+"/switchboard/page"))
+	r, errs, err := twilio.CallWithUrlCallbacks(cfg.TwilPhone, p.Phone, gotwilio.NewCallbackParameters(cfg.BaseURL+"/switchboard/page"))
 	if err != nil {
 		fmt.Println("[Error]", err)
 		return
@@ -107,6 +167,15 @@ func mkcall(inc int, db dao.Dao, cfg config.Config) {
 		fmt.Println("[Twil Error]", errs.Error())
 		return
 	}
+
+	i.CallId = r.Sid
+	i.LastCall = time.Now()
+	err = db.WriteIncident(i)
+	if err != nil {
+		fmt.Println("[Error]", err)
+		return
+	}
+
 }
 
 
@@ -135,12 +204,36 @@ func Page(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 			return err
 		}
 
-		fmt.Printf("PARAMS:\n%+v\n", params)
-
+		callId := params.Get("CallSid")
 		callStatus := params.Get("CallStatus")
 		called := params.Get("Called")
 		msg := params.Get("msg")
 		digits := params.Get("Digits")
+
+
+		// Stop calling
+		i, err := db.GetIncident()
+		if err != nil{
+			resp := `<?xml version="1.0" encoding="UTF-8"?>
+				<Response>
+						<Say voice="Polly.Joanna" language="en-US">
+							Something went wrong with callr
+						</Say>
+						<Hangup/>
+				</Response> 
+				`
+			return c.Blob(200, "application/xml", []byte(resp))
+		}
+		// Stop calling if for some reason, status is not calling...
+		if i.Status != "Calling" || i.CallId != callId {
+			resp := `<?xml version="1.0" encoding="UTF-8"?>
+				<Response>
+						<Hangup/>
+				</Response> 
+				`
+			return c.Blob(200, "application/xml", []byte(resp))
+		}
+
 
 		// Init call
 		if callStatus == "in-progress" && msg == "" && digits == "" {

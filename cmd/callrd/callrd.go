@@ -21,7 +21,7 @@ func main() {
 
 	fmt.Println("---- API ----")
 	fmt.Println("Incident reporting: POST/GET:", cfg.BaseURL+"/incident?token="+cfg.IncidentToken)
-	fmt.Println("      Close Incident: DELETE:", cfg.BaseURL+"/incident?token="+cfg.IncidentToken)
+	fmt.Println("    Incident is rotten after:", cfg.IncidentRottenDuration)
 
 	fmt.Println("\n---- GUI ----")
 	fmt.Println("Page at:", cfg.BaseURL)

@@ -89,12 +89,16 @@ func (d Dao) WriteIncident(i Incident) error {
 	return nil
 }
 
-func (d Dao) CloseIncident() (Incident, error) {
+func (d Dao) CloseIncident(status ... string) (Incident, error) {
 	i, err := d.GetIncident()
 	if err != nil {
 		return Incident{}, err
 	}
 	i.Status = "Closed"
+
+	if status != nil{
+		i.Status = strings.Join(status, ",")
+	}
 
 	err = d.WriteIncident(i)
 	if err != nil {
