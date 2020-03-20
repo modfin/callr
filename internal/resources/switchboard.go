@@ -10,14 +10,13 @@ import (
 	"time"
 )
 
-
-func rotIncident(db dao.Dao, cfg config.Config) error{
+func rotIncident(db dao.Dao, cfg config.Config) error {
 	i, err := db.GetIncident()
 
-	if err != nil && err.Error() == "no incident exists"{
+	if err != nil && err.Error() == "no incident exists" {
 		return nil
 	}
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -28,17 +27,14 @@ func rotIncident(db dao.Dao, cfg config.Config) error{
 	return err
 }
 
-
-
 func Incident(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if c.QueryParams().Get("token") != cfg.IncidentToken {
 			return c.String(400, "correct token was not provided")
 		}
 
-
 		err := rotIncident(db, cfg)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 
@@ -76,7 +72,7 @@ func Incident(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 }
 
 func caller(db dao.Dao, cfg config.Config) {
-	sleep := time.Second*5
+	sleep := time.Second * 5
 	twilio := gotwilio.NewTwilioClient(cfg.TwilSID, cfg.TwilToken)
 	for {
 		i, err := db.GetIncident()
@@ -85,7 +81,7 @@ func caller(db dao.Dao, cfg config.Config) {
 			return
 		}
 
-		if err != nil{
+		if err != nil {
 			fmt.Println("[Error]", err)
 		}
 
@@ -104,7 +100,7 @@ func caller(db dao.Dao, cfg config.Config) {
 				break
 			}
 
-			if time.Since(i.LastCall) > time.Minute{
+			if time.Since(i.LastCall) > time.Minute {
 				mkcall(1, db, cfg)
 				break
 			}
@@ -119,8 +115,8 @@ func caller(db dao.Dao, cfg config.Config) {
 				break
 			}
 
-			switch r.Status{
-			case "busy", "cancelled","completed", "failed", "no-answer":
+			switch r.Status {
+			case "busy", "cancelled", "completed", "failed", "no-answer":
 				mkcall(1, db, cfg)
 			}
 
@@ -178,7 +174,6 @@ func mkcall(inc int, db dao.Dao, cfg config.Config) {
 
 }
 
-
 func TestCall() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		resp := `<?xml version="1.0" encoding="UTF-8"?>
@@ -192,7 +187,6 @@ func TestCall() echo.HandlerFunc {
 		return c.Blob(200, "application/xml", []byte(resp))
 	}
 }
-
 
 func Page(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -210,10 +204,9 @@ func Page(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 		msg := params.Get("msg")
 		digits := params.Get("Digits")
 
-
 		// Stop calling
 		i, err := db.GetIncident()
-		if err != nil{
+		if err != nil {
 			resp := `<?xml version="1.0" encoding="UTF-8"?>
 				<Response>
 						<Say voice="Polly.Joanna" language="en-US">
@@ -233,7 +226,6 @@ func Page(db dao.Dao, cfg config.Config) echo.HandlerFunc {
 				`
 			return c.Blob(200, "application/xml", []byte(resp))
 		}
-
 
 		// Init call
 		if callStatus == "in-progress" && msg == "" && digits == "" {

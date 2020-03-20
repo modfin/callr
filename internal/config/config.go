@@ -14,12 +14,11 @@ type Config struct {
 	BaseURL  string `env:"BASE_URL,required"`
 	DataPath string `env:"DATA_PATH,required"`
 
-	IncidentToken string `env:"INCIDENT_TOKEN,required"`
+	IncidentToken          string        `env:"INCIDENT_TOKEN,required"`
 	IncidentRottenDuration time.Duration `env:"INCIDENT_ROTTEN_DURATION" envDefault:"4h"`
 
 	BasicAuthUser string `env:"BASIC_AUTH_USER,required"`
 	BasicAuthPass string `env:"BASIC_AUTH_PASS,required"`
-
 
 	TwilSID   string `env:"TWIL_SID,required"`
 	TwilToken string `env:"TWIL_TOKEN,required"`

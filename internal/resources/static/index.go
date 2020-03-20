@@ -2,8 +2,7 @@ package static
 
 import "github.com/labstack/echo"
 
-
-func Index(c echo.Context) error{
+func Index(c echo.Context) error {
 	return c.Blob(200, "text/html", []byte(index))
 }
 

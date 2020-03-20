@@ -89,14 +89,14 @@ func (d Dao) WriteIncident(i Incident) error {
 	return nil
 }
 
-func (d Dao) CloseIncident(status ... string) (Incident, error) {
+func (d Dao) CloseIncident(status ...string) (Incident, error) {
 	i, err := d.GetIncident()
 	if err != nil {
 		return Incident{}, err
 	}
 	i.Status = "Closed"
 
-	if status != nil{
+	if status != nil {
 		i.Status = strings.Join(status, ",")
 	}
 
@@ -162,10 +162,10 @@ func (d Dao) WritePeople(people []Person) error {
 	defer d.mu.Unlock()
 	data, err := json.MarshalIndent(people, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 
-	return ioutil.WriteFile(d.Store + "/people.json", data, 0660)
+	return ioutil.WriteFile(d.Store+"/people.json", data, 0660)
 }
 
 func (d Dao) WriteOnCall(people []Person) error {
@@ -173,10 +173,10 @@ func (d Dao) WriteOnCall(people []Person) error {
 	defer d.mu.Unlock()
 	data, err := json.MarshalIndent(people, "", "  ")
 	if err != nil {
-		return  err
+		return err
 	}
 
-	return ioutil.WriteFile(d.Store + "/oncall.json", data, 0660)
+	return ioutil.WriteFile(d.Store+"/oncall.json", data, 0660)
 }
 
 func (d Dao) GetPersonByPhone(phone string) (Person, error) {
@@ -228,7 +228,6 @@ func (d Dao) GetLogs(id string) ([]Log, error) {
 }
 
 func (d Dao) GetIncidents() ([]Incident, error) {
-
 
 	filename := d.Store + "/incidents"
 	if _, err := os.Stat(filename); os.IsNotExist(err) {

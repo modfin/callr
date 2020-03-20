@@ -17,7 +17,7 @@ func DeleteActiveIncident(db dao.Dao) echo.HandlerFunc {
 	}
 }
 
-func GetActiveIncident(db dao.Dao) echo.HandlerFunc{
+func GetActiveIncident(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		is, err := db.GetIncident()
 		if err == nil {
@@ -31,7 +31,7 @@ func GetActiveIncident(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-func GetOldIncidents(db dao.Dao) echo.HandlerFunc{
+func GetOldIncidents(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		is, err := db.GetIncidents()
 		if err != nil {
@@ -41,7 +41,7 @@ func GetOldIncidents(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-func GetIncidentLogs(db dao.Dao) echo.HandlerFunc{
+func GetIncidentLogs(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		logs, err := db.GetLogs(c.Param("id"))
 		if err != nil {
@@ -51,8 +51,7 @@ func GetIncidentLogs(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-
-func GetPeople(db dao.Dao) echo.HandlerFunc{
+func GetPeople(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		people, err := db.GetPeople()
 		if err != nil {
@@ -62,15 +61,14 @@ func GetPeople(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-func PostPeople(db dao.Dao) echo.HandlerFunc{
+func PostPeople(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		var people []dao.Person
 		err := c.Bind(&people)
-		if err != nil{
+		if err != nil {
 			return err
 		}
-
 
 		err = db.WritePeople(people)
 		if err != nil {
@@ -80,15 +78,14 @@ func PostPeople(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-func PostOnCall(db dao.Dao) echo.HandlerFunc{
+func PostOnCall(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		var people []dao.Person
 		err := c.Bind(&people)
-		if err != nil{
+		if err != nil {
 			return err
 		}
-
 
 		err = db.WriteOnCall(people)
 		if err != nil {
@@ -98,8 +95,7 @@ func PostOnCall(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-
-func GetOnCall(db dao.Dao) echo.HandlerFunc{
+func GetOnCall(db dao.Dao) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		people, err := db.GetOnCall()
 		if err != nil {
@@ -109,7 +105,7 @@ func GetOnCall(db dao.Dao) echo.HandlerFunc{
 	}
 }
 
-func GetTestCall(cfg config.Config) echo.HandlerFunc{
+func GetTestCall(cfg config.Config) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		phone := c.Param("phone")
