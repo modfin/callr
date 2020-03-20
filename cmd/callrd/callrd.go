@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var db dao.Dao
@@ -39,6 +40,13 @@ func main() {
 	})
 
 	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+
+	if cfg.AutoTLS && len(cfg.AutoTLSDir) > 0 {
+		e.AutoTLSManager.Cache = autocert.DirCache(cfg.AutoTLSDir)
+	}
+
 	e.POST("/switchboard/page", resources.Page(db, cfg))
 	e.POST("/switchboard/test-call", resources.TestCall())
 	e.POST("/incident", resources.Incident(db, cfg))
@@ -64,5 +72,9 @@ func main() {
 
 	e.GET("/api/test-call/:phone", resources.GetTestCall(cfg), basicAuth)
 
+	if cfg.AutoTLS {
+		e.Logger.Fatal(e.StartAutoTLS(fmt.Sprintf(":%d", cfg.Port)))
+	}
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", cfg.Port)))
+
 }

@@ -10,6 +10,9 @@ import (
 )
 
 type Config struct {
+	AutoTLS    bool   `env:"AUTO_TLS"`
+	AutoTLSDir string `env:"AUTO_TLS_DIR"`
+
 	Port     int    `env:"PORT" envDefault:"8080"`
 	BaseURL  string `env:"BASE_URL,required"`
 	DataPath string `env:"DATA_PATH,required"`
