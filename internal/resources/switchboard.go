@@ -126,6 +126,8 @@ func caller(db dao.Dao, cfg config.Config) {
 			if err != nil {
 				fmt.Println("[Error]", err)
 			}
+		case "Failed":
+			sleep = time.Minute
 		case "Closed", "Rotten":
 			return
 		}
@@ -143,6 +145,12 @@ func mkcall(inc int, db dao.Dao, cfg config.Config) {
 	}
 	if len(oncall) == 0 {
 		fmt.Println("[Error]", "no one in the oncall list")
+		i.Status = "Failed"
+		i.Messages = append(i.Messages, "No one on-call")
+		err = db.WriteIncident(i)
+		if err != nil {
+			fmt.Println("[Error]", err)
+		}
 		return
 	}
 	if i.OnCallIndex > 10 {

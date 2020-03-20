@@ -12,15 +12,15 @@ type Incident struct {
 	Id        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	Status    string    `json:"status"`
+	Messages  []string  `json:"messages"`
 
 	OnCallIndex int `json:"on_call_index"`
 
 	CallId   string    `json:"call_id"`
 	LastCall time.Time `json:"last_call"`
 
-	Responsible *Person `json:"responsible"`
-
-	Declined []Person `json:"declined,omitempty"`
+	Responsible *Person  `json:"responsible"`
+	Declined    []Person `json:"declined,omitempty"`
 }
 
 type Log struct {

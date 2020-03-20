@@ -17,7 +17,7 @@ var cfg config.Config
 func main() {
 
 	cfg = config.Get()
-	db.Store = cfg.DataPath
+	db = dao.New(cfg.DataPath)
 
 	fmt.Println("---- API ----")
 	fmt.Println("Incident reporting: POST/GET:", cfg.BaseURL+"/incident?token="+cfg.IncidentToken)
@@ -64,5 +64,5 @@ func main() {
 
 	e.GET("/api/test-call/:phone", resources.GetTestCall(cfg), basicAuth)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", cfg.Port)))
 }

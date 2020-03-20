@@ -13,14 +13,22 @@ import (
 
 type Dao struct {
 	mu    sync.Mutex
-	Store string
+	store string
+}
+
+func New(path string) Dao {
+	err := os.MkdirAll(path, 770)
+	if err != nil {
+		panic(err)
+	}
+	return Dao{store: path}
 }
 
 func (d Dao) GetOnCall() (p []Person, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	filename := d.Store + "/oncall.json"
+	filename := d.store + "/oncall.json"
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -36,7 +44,7 @@ func (d Dao) GetOnCall() (p []Person, err error) {
 
 func (d Dao) NewIncident() error {
 	d.mu.Lock()
-	filename := d.Store + "/incident.json"
+	filename := d.store + "/incident.json"
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		now := time.Now()
@@ -57,7 +65,7 @@ func (d Dao) GetIncident() (Incident, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	filename := d.Store + "/incident.json"
+	filename := d.store + "/incident.json"
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return Incident{}, errors.New("no incident exists")
@@ -76,7 +84,7 @@ func (d Dao) WriteIncident(i Incident) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	filename := d.Store + "/incident.json"
+	filename := d.store + "/incident.json"
 
 	data, err := json.MarshalIndent(i, "", "  ")
 	if err != nil {
@@ -96,8 +104,11 @@ func (d Dao) CloseIncident(status ...string) (Incident, error) {
 	}
 	i.Status = "Closed"
 
-	if status != nil {
-		i.Status = strings.Join(status, ",")
+	if len(status) > 0 {
+		i.Status = status[0]
+	}
+	if len(status) > 1 {
+		i.Messages = append(i.Messages, status[1:]...)
 	}
 
 	err = d.WriteIncident(i)
@@ -108,10 +119,10 @@ func (d Dao) CloseIncident(status ...string) (Incident, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	filename := d.Store + "/incident.json"
-	toFilename := d.Store + "/incidents/" + i.Id + "/incident.json"
+	filename := d.store + "/incident.json"
+	toFilename := d.store + "/incidents/" + i.Id + "/incident.json"
 
-	err = os.MkdirAll(d.Store+"/incidents/"+i.Id, 0770)
+	err = os.MkdirAll(d.store+"/incidents/"+i.Id, 0770)
 	if err != nil {
 		return Incident{}, err
 	}
@@ -122,12 +133,12 @@ func (d Dao) AddLog(incident Incident, log Log) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	err := os.MkdirAll(d.Store+"/incidents/"+incident.Id, 0770)
+	err := os.MkdirAll(d.store+"/incidents/"+incident.Id, 0770)
 	if err != nil {
 		return err
 	}
 
-	filename := d.Store + "/incidents/" + incident.Id + "/" + time.Now().Format(time.RFC3339) + ".log.json"
+	filename := d.store + "/incidents/" + incident.Id + "/" + time.Now().Format(time.RFC3339) + ".log.json"
 
 	data, err := json.MarshalIndent(log, "", "  ")
 	if err != nil {
@@ -142,7 +153,7 @@ func (d Dao) GetPeople() ([]Person, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	filename := d.Store + "/people.json"
+	filename := d.store + "/people.json"
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -165,7 +176,7 @@ func (d Dao) WritePeople(people []Person) error {
 		return err
 	}
 
-	return ioutil.WriteFile(d.Store+"/people.json", data, 0660)
+	return ioutil.WriteFile(d.store+"/people.json", data, 0660)
 }
 
 func (d Dao) WriteOnCall(people []Person) error {
@@ -176,7 +187,7 @@ func (d Dao) WriteOnCall(people []Person) error {
 		return err
 	}
 
-	return ioutil.WriteFile(d.Store+"/oncall.json", data, 0660)
+	return ioutil.WriteFile(d.store+"/oncall.json", data, 0660)
 }
 
 func (d Dao) GetPersonByPhone(phone string) (Person, error) {
@@ -194,7 +205,7 @@ func (d Dao) GetPersonByPhone(phone string) (Person, error) {
 
 func (d Dao) GetLogs(id string) ([]Log, error) {
 
-	ff, err := ioutil.ReadDir(d.Store + "/incidents/" + id)
+	ff, err := ioutil.ReadDir(d.store + "/incidents/" + id)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +219,7 @@ func (d Dao) GetLogs(id string) ([]Log, error) {
 
 	var logs []Log
 	for _, f := range files {
-		filename := d.Store + "/incidents/" + id + "/" + f
+		filename := d.store + "/incidents/" + id + "/" + f
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			continue
 		}
@@ -229,7 +240,7 @@ func (d Dao) GetLogs(id string) ([]Log, error) {
 
 func (d Dao) GetIncidents() ([]Incident, error) {
 
-	filename := d.Store + "/incidents"
+	filename := d.store + "/incidents"
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -257,7 +268,7 @@ func (d Dao) GetIncidents() ([]Incident, error) {
 
 	for _, di := range dirs {
 
-		filename := d.Store + "/incidents/" + di + "/incident.json"
+		filename := d.store + "/incidents/" + di + "/incident.json"
 
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			continue
