@@ -65,38 +65,37 @@ callr_1  | Page at: https://b94a4401.ngrok.io
 * Run the following (with the correct credentials)
 
 ```bash 
-mkdir /root/callr
+mkdir -p /root/callr
+mkdir -p /root/callr-tls
 echo '
-version: "3.0"
+version: "3.2"
 services:
   callr:
     image: modfin/callrd:latest
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
     environment:
-      - "TWIL_SID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-      - "TWIL_TOKEN=YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
-      - "TWIL_PHONE=+46123456789"
+      - "AUTO_TLS=true"
+      - "AUTO_TLS_DIR=/callr-tls"
+      - "DEBUG=true"
+      - "TWIL_SID=XXXXXXXXXXXXXXXXXXXXXXXX"
+      - "TWIL_TOKEN=YYYYYYYYYYYYYYYYYYYYYYY"
+      - "TWIL_PHONE=+4612345678"
       - "BASE_URL=https://callr.example.com"
       - "DATA_PATH=/callr-data"
-      - "BASIC_AUTH_USER=admin"
-      - "BASIC_AUTH_PASS=a-password"
+      - "BASIC_AUTH_USER=aUser"
+      - "BASIC_AUTH_PASS=aPassword"
       - "INCIDENT_TOKEN=ABCDEFGHIJ"
     volumes:
       - /root/callr:/callr-data
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.port=8080"
-        - "traefik.frontend.rule=Host:callr.example.com"
-
-  traefik:
-    image: traefik:v1.7.21
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /root/traefik/traefik.toml:/traefik.toml
-      - /root/traefik/acme.json:/acme.json
-    ports:
-      - "80:80"
-      - "443:443"
+      - /root/callr-tls:/callr-tls
 ' > docker-compose.yml
 
 $ docker stack deploy callr -c ./docker-compose.yml
@@ -107,7 +106,6 @@ $ docker stack deploy callr -c ./docker-compose.yml
 * Add the post hook `https://callr.example.com/incident?token=ABCDEFGHIJ` to you monitoring service
 
 ## TODO
-* Implement Lets Encrypt, in order to do away with Ingress service
 * Some clean up 
 * Add SQL based DAO
 * Rewriting some stuff to be able to run as a cloud function.

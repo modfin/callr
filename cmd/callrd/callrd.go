@@ -7,8 +7,8 @@ import (
 	"callr/internal/resources/static"
 	"crypto/subtle"
 	"fmt"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -43,10 +43,6 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 
-	if cfg.AutoTLS && len(cfg.AutoTLSDir) > 0 {
-		e.AutoTLSManager.Cache = autocert.DirCache(cfg.AutoTLSDir)
-	}
-
 	e.POST("/switchboard/page", resources.Page(db, cfg))
 	e.POST("/switchboard/test-call", resources.TestCall())
 	e.POST("/incident", resources.Incident(db, cfg))
@@ -73,8 +69,23 @@ func main() {
 	e.GET("/api/test-call/:phone", resources.GetTestCall(cfg), basicAuth)
 
 	if cfg.AutoTLS {
-		e.Logger.Fatal(e.StartAutoTLS(fmt.Sprintf(":%d", cfg.Port)))
+		go func() {
+			ee := echo.New()
+			ee.Pre(middleware.HTTPSRedirect())
+			ee.Logger.Fatal(ee.Start(fmt.Sprintf(":%d", cfg.PortHTTP)))
+		}()
+
+		if len(cfg.AutoTLSDir) > 0 {
+			e.AutoTLSManager.Cache = autocert.DirCache(cfg.AutoTLSDir)
+		}
+		if len(cfg.AutoTLSDomains) > 0 {
+			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(cfg.AutoTLSDomains...)
+		}
+		if len(cfg.AutoTLSEmail) > 0 {
+			e.AutoTLSManager.Email = cfg.AutoTLSEmail
+		}
+		e.Logger.Fatal(e.StartAutoTLS(fmt.Sprintf(":%d", cfg.PortHTTPS)))
 	}
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", cfg.Port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", cfg.PortHTTP)))
 
 }

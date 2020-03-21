@@ -3,7 +3,7 @@ package resources
 import (
 	"callr/internal/config"
 	"callr/internal/dao"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/sfreiberg/gotwilio"
 )
 

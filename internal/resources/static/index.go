@@ -1,6 +1,6 @@
 package static
 
-import "github.com/labstack/echo"
+import "github.com/labstack/echo/v4"
 
 func Index(c echo.Context) error {
 	return c.Blob(200, "text/html", []byte(index))
